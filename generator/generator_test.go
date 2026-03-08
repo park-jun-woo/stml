@@ -217,6 +217,62 @@ func TestGenerateWithoutInfraParams(t *testing.T) {
 	assertNotContains(t, code, "다음")
 }
 
+func TestGenerateOptionsAPIImportPath(t *testing.T) {
+	page, _ := parser.ParseReader("login-page.html", strings.NewReader(`<main>
+  <div data-action="Login">
+    <input data-field="Email" type="email" />
+    <button type="submit">로그인</button>
+  </div>
+</main>`))
+
+	opts := GenerateOptions{APIImportPath: "../api", UseClient: false}
+	code := GeneratePage(page, "", opts)
+
+	assertContains(t, code, `import { api } from '../api'`)
+	assertNotContains(t, code, `@/lib/api`)
+	assertNotContains(t, code, "'use client'")
+}
+
+func TestGenerateOptionsDefaults(t *testing.T) {
+	page, _ := parser.ParseReader("login-page.html", strings.NewReader(`<main>
+  <div data-action="Login">
+    <input data-field="Email" type="email" />
+    <button type="submit">로그인</button>
+  </div>
+</main>`))
+
+	// No opts — should use defaults
+	code := GeneratePage(page, "")
+
+	assertContains(t, code, `import { api } from '@/lib/api'`)
+	assertContains(t, code, "'use client'")
+}
+
+func TestGenerateResultDependencies(t *testing.T) {
+	page, _ := parser.ParseReader("login-page.html", strings.NewReader(`<main>
+  <div data-action="Login">
+    <input data-field="Email" type="email" />
+    <button type="submit">로그인</button>
+  </div>
+</main>`))
+
+	outDir := t.TempDir()
+	result, err := Generate([]parser.PageSpec{page}, "", outDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Pages != 1 {
+		t.Errorf("expected 1 page, got %d", result.Pages)
+	}
+	if result.Dependencies["@tanstack/react-query"] != "^5" {
+		t.Errorf("expected @tanstack/react-query ^5, got %q", result.Dependencies["@tanstack/react-query"])
+	}
+	if result.Dependencies["react-hook-form"] != "^7" {
+		t.Errorf("expected react-hook-form ^7, got %q", result.Dependencies["react-hook-form"])
+	}
+}
+
 func assertContains(t *testing.T, code, substr string) {
 	t.Helper()
 	if !strings.Contains(code, substr) {

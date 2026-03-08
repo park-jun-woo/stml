@@ -91,10 +91,12 @@ func collectActionImports(a parser.ActionBlock, is *importSet, compSet map[strin
 }
 
 // renderImports generates the import block string.
-func renderImports(is importSet) string {
+func renderImports(is importSet, opt GenerateOptions) string {
 	var lines []string
 
-	lines = append(lines, "'use client'\n")
+	if opt.UseClient {
+		lines = append(lines, "'use client'\n")
+	}
 	if is.useState {
 		lines = append(lines, "import React, { useState } from 'react'")
 	} else {
@@ -127,7 +129,7 @@ func renderImports(is importSet) string {
 	}
 
 	// api client
-	lines = append(lines, "import { api } from '@/lib/api'")
+	lines = append(lines, fmt.Sprintf("import { api } from '%s'", opt.APIImportPath))
 
 	// components
 	for _, comp := range is.components {

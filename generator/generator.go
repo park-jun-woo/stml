@@ -9,24 +9,77 @@ import (
 	"github.com/geul-org/stml/parser"
 )
 
-// Generate produces React TSX files from parsed PageSpecs.
-func Generate(pages []parser.PageSpec, specsDir, outDir string) error {
-	if err := os.MkdirAll(outDir, 0o755); err != nil {
-		return fmt.Errorf("mkdir %s: %w", outDir, err)
-	}
+// GenerateOptions configures code generation behavior.
+type GenerateOptions struct {
+	APIImportPath string // import path for api module (default: "@/lib/api")
+	UseClient     bool   // emit 'use client' directive (default: true)
+}
 
-	for _, page := range pages {
-		code := GeneratePage(page, specsDir)
-		path := filepath.Join(outDir, page.Name+".tsx")
-		if err := os.WriteFile(path, []byte(code), 0o644); err != nil {
-			return fmt.Errorf("write %s: %w", path, err)
+// GenerateResult contains generation output metadata.
+type GenerateResult struct {
+	Pages        int
+	Dependencies map[string]string // package name → version range
+}
+
+// DefaultOptions returns GenerateOptions with default values.
+func DefaultOptions() GenerateOptions {
+	return GenerateOptions{
+		APIImportPath: "@/lib/api",
+		UseClient:     true,
+	}
+}
+
+// Generate produces React TSX files from parsed PageSpecs.
+func Generate(pages []parser.PageSpec, specsDir, outDir string, opts ...GenerateOptions) (*GenerateResult, error) {
+	opt := DefaultOptions()
+	if len(opts) > 0 {
+		opt = opts[0]
+		if opt.APIImportPath == "" {
+			opt.APIImportPath = "@/lib/api"
 		}
 	}
-	return nil
+
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return nil, fmt.Errorf("mkdir %s: %w", outDir, err)
+	}
+
+	// Collect dependency info across all pages
+	deps := map[string]string{}
+	for _, page := range pages {
+		code := GeneratePage(page, specsDir, opts...)
+		path := filepath.Join(outDir, page.Name+".tsx")
+		if err := os.WriteFile(path, []byte(code), 0o644); err != nil {
+			return nil, fmt.Errorf("write %s: %w", path, err)
+		}
+
+		is := collectImports(page, specsDir)
+		if is.useQuery || is.useMutation || is.useQueryClient {
+			deps["@tanstack/react-query"] = "^5"
+		}
+		if is.useForm {
+			deps["react-hook-form"] = "^7"
+		}
+		if is.useParams {
+			deps["react-router-dom"] = "^6"
+		}
+	}
+
+	return &GenerateResult{
+		Pages:        len(pages),
+		Dependencies: deps,
+	}, nil
 }
 
 // GeneratePage generates the TSX source code for a single page.
-func GeneratePage(page parser.PageSpec, specsDir string) string {
+func GeneratePage(page parser.PageSpec, specsDir string, opts ...GenerateOptions) string {
+	opt := DefaultOptions()
+	if len(opts) > 0 {
+		opt = opts[0]
+		if opt.APIImportPath == "" {
+			opt.APIImportPath = "@/lib/api"
+		}
+	}
+
 	is := collectImports(page, specsDir)
 	componentName := toComponentName(page.Name)
 
@@ -61,7 +114,7 @@ func GeneratePage(page parser.PageSpec, specsDir string) string {
 	var sb strings.Builder
 
 	// Imports
-	sb.WriteString(renderImports(is))
+	sb.WriteString(renderImports(is, opt))
 	sb.WriteString("\n\n")
 
 	// Component

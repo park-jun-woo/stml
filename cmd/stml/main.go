@@ -100,10 +100,17 @@ func runGen() {
 		os.Exit(1)
 	}
 
-	if err := generator.Generate(pages, frontendDir, outDir); err != nil {
+	result, err := generator.Generate(pages, frontendDir, outDir)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("generated %d files in %s\n", len(pages), outDir)
+	fmt.Printf("generated %d files in %s\n", result.Pages, outDir)
+	if len(result.Dependencies) > 0 {
+		fmt.Println("dependencies:")
+		for pkg, ver := range result.Dependencies {
+			fmt.Printf("  %s: %s\n", pkg, ver)
+		}
+	}
 }
