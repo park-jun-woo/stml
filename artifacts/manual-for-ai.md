@@ -27,7 +27,7 @@ specs/frontend/*.html  →  stml parse  →  PageSpec (JSON)
 | `data-state` | Conditional render | Condition expression | Suffixes: `.empty`, `.loading`, `.error`, or plain boolean |
 | `data-component` | Delegate to React component | Component name | Wrapper file must exist in `components/` |
 
-### Infrastructure Attributes (4)
+### Infrastructure Attributes (3)
 
 | Attribute | Purpose | Value | Requires |
 |---|---|---|---|
@@ -134,6 +134,6 @@ export function totalPrice(items) {
 
 | Tier | Coverage | Declaration | Example |
 |---|---|---|---|
-| data-* | 60-70% | 12 fixed attributes | Lists, forms, CRUD, pagination |
+| data-* | 60-70% | 11 fixed attributes | Lists, forms, CRUD, pagination |
 | React wrapper | 20-30% | `data-component` + re-export | DatePicker, RichEditor, Chart |
 | Custom + JSDoc | 5-10% | `data-component` + implementation | KanbanBoard, CodeReviewTimeline |
