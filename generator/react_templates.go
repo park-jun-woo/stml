@@ -399,11 +399,9 @@ func renderStateJSX(s parser.StateBind, dataVar string, indent int) string {
 		field := strings.TrimSuffix(s.Condition, ".empty")
 		cond = fmt.Sprintf("%s.%s?.length === 0", dataVar, field)
 	case strings.HasSuffix(s.Condition, ".loading"):
-		field := strings.TrimSuffix(s.Condition, ".loading")
-		cond = toLowerFirst(field) + "Loading"
+		cond = dataVar + "Loading"
 	case strings.HasSuffix(s.Condition, ".error"):
-		field := strings.TrimSuffix(s.Condition, ".error")
-		cond = toLowerFirst(field) + "Error"
+		cond = dataVar + "Error"
 	default:
 		cond = fmt.Sprintf("%s.%s", dataVar, s.Condition)
 	}
