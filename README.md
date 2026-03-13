@@ -1,5 +1,8 @@
 # STML
 
+> **This project is now managed in the [fullend](https://github.com/geul-org/fullend) repository.**
+> Please use the fullend repository for new issues, PRs, and development.
+
 **SSOT Template Markup Language** — a framework-independent declaration of what your frontend pages show and do.
 
 ## Why
